@@ -1,0 +1,42 @@
+{
+  "type": "datasource",
+  "name": "Akamai GTM Datasource",
+  "id": "akamai-gtm-datasource",
+  "metrics": true,
+  "backend": true,
+  "alerting": true,
+  "executable": "gpx_akamai-gtm-datasource-plugin",
+  "info": {
+    "description": "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics",
+    "author": {
+      "name": "Akamai Technologies"
+    },
+    "keywords": ["akamai", "GTM"],
+    "logos": {
+      "small": "img/akamai-logo.png",
+      "large": "img/akamai-logo.png"
+    },
+    "links": [
+      {
+        "name": "Website",
+        "url": "https://www.akamai.com"
+      },
+      {
+        "name": "GitHub",
+        "url": "https://github.com/akamai/gtm-grafana-datasource-plugin"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/akamai/gtm-grafana-datasource-plugin/blob/master/LICENSE"
+      }
+    ],
+    "screenshots": [],
+    "version": "0.0.1",
+    "updated": "2021-03-08"
+  },
+  "dependencies": {
+    "grafanaDependency": "7.x.x",
+    "grafanaVersion": "7.x.x",
+    "plugins": []
+  }
+}
