@@ -35,7 +35,8 @@ import (
 // Akamai OPEN EdgeGrid for GoLang v1
 // https://github.com/akamai/AkamaiOPEN-edgegrid-golang/
 
-const GTM_URL_FORMAT = "/reporting-api/v1/reports/load-balancing-dns-traffic-all-properties/versions/2/report-data?start=%v&end=%v&interval=%v"
+const GTM_POST_URL_FORMAT = "/reporting-api/v1/reports/load-balancing-dns-traffic-all-properties/versions/2/report-data?start=%v&end=%v&interval=%v"
+const GTM_TEST_URL_FORMAT = "/reporting-api/v1/reports/load-balancing-dns-traffic-all-properties/versions/2/report-data?start=%v&end=%v&interval=%v&objectIds=%v"
 const FOUR_WEEKS = 4 * 7 * 24 // four weeks as hours
 const NINETY_DAYS = 90 * 24 * time.Hour
 
@@ -115,9 +116,13 @@ func openApiUrlTimeFormat(t time.Time) string {
 	return url.QueryEscape(t.Format(time.RFC3339))
 }
 
-// The OPEN API URL
-func createOpenUrl(fromRounded time.Time, toRounded time.Time, interval Interval) string {
-	return fmt.Sprintf(GTM_URL_FORMAT, openApiUrlTimeFormat(fromRounded), openApiUrlTimeFormat(toRounded), interval)
+// OPEN API URLs
+func createPostOpenUrl(fromRounded time.Time, toRounded time.Time, interval Interval) string {
+	return fmt.Sprintf(GTM_POST_URL_FORMAT, openApiUrlTimeFormat(fromRounded), openApiUrlTimeFormat(toRounded), interval)
+}
+
+func createTestOpenUrl(fromRounded time.Time, toRounded time.Time, interval Interval, zone string) string {
+	return fmt.Sprintf(GTM_TEST_URL_FORMAT, openApiUrlTimeFormat(fromRounded), openApiUrlTimeFormat(toRounded), interval, zone)
 }
 
 // EdgeGrid configuration structure constructor
@@ -196,7 +201,6 @@ type OpenApiErrorRspDto struct {
 
 // Verify that the datasource can reach the OPEN API
 func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string, clientToken string) (string, backend.HealthStatus) {
-	return "Data source is working", backend.HealthStatusOk  // ###TBD###
 
 	to := time.Now()                 // now
 	from := to.Add(-5 * time.Minute) // five minutes ago
@@ -204,15 +208,15 @@ func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string,
 
 	fromRounded := roundupTimeForInterval(from, interval)
 	toRounded := roundupTimeForInterval(to, interval)
-	openurl := createOpenUrl(fromRounded, toRounded, interval) // The URL
+	openurl := createTestOpenUrl(fromRounded, toRounded, interval, "-fake-") // The URL
 	log.DefaultLogger.Info("gtmOpenApiHealthCheck", "openurl", openurl)
 
 	config := NewEdgegridConfig(clientSecret, host, accessToken, clientToken)
 
-	// Send HEAD request to the OPEN API
-	apireq, err := client.NewRequest(*config, "HEAD", openurl, nil)
+	// Send GET request to the OPEN API
+	apireq, err := client.NewRequest(*config, "GET", openurl, nil)
 	if err != nil {
-		log.DefaultLogger.Error("Error creating HEAD request", "err", err)
+		log.DefaultLogger.Error("Error creating GET request", "err", err)
 		return err.Error(), backend.HealthStatusError
 	}
 	apiresp, err := client.Do(*config, apireq)
@@ -221,31 +225,53 @@ func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string,
 		return err.Error(), backend.HealthStatusError
 	}
 
-	log.DefaultLogger.Info("gtmOpenApiHead", "Status", apiresp.Status)
+	log.DefaultLogger.Info("gtmOpenApiHealthCheck", "Status (403 expected)", apiresp.Status)
 
-	// Error response. The datasource cannot reach the OPEN API.
-	if apiresp.StatusCode != 200 {
+	// 403 Forbidden is expected because -test- is not a valid zone name.
+
+	// Not a 403 response: datasource failed.
+	if apiresp.StatusCode != 403 {
 		var rspDto OpenApiErrorRspDto
 		err := json.NewDecoder(apiresp.Body).Decode(&rspDto)
-		msg := "Datasource failed: "
+		msg := "Unexpected status code. Datasource failed: "
 		if err != nil { // A JSON decode error. Not the expected body. Use the response status for the error message.
 			msg += apiresp.Status
 		} else {
-			msg += rspDto.Errors[0].Title // E.g. "Some of the requested objects are unauthorized: [foo.bar.com]"
+			msg += rspDto.Errors[0].Title
 		}
 		log.DefaultLogger.Error("gtmOpenApiTest", "msg", msg)
-		return msg, backend.HealthStatusError
+		return msg, backend.HealthStatusError // RETURN
 	}
 
-	// Success response
+	// 403 response
+	var rspDto OpenApiErrorRspDto
+	err = json.NewDecoder(apiresp.Body).Decode(&rspDto)
+
+	// 403 response but not the expected body: datasource failed.
+	if err != nil {
+		msg := "Unexpected response format. Datasource failed: " + apiresp.Status
+		log.DefaultLogger.Error("gtmOpenApiTest", "msg", msg)
+		return msg, backend.HealthStatusError // RETURN
+	}
+
+	// 403 response with the expected body
+	errorTitle := rspDto.Errors[0].Title
+
+	// 403 response but not the expected error: datasource failed.
+	if errorTitle != "Some of the requested objects are unauthorized: [-fake-]" {
+		msg := "Unexpected error type. Datasource failed: " + errorTitle
+		log.DefaultLogger.Error("gtmOpenApiTest", "msg", msg)
+		return msg, backend.HealthStatusError // RETURN
+	}
+
 	return "Data source is working", backend.HealthStatusOk
 }
 
 // Get data needed to populate the graph.
 func gtmOpenApiQuery(zoneNamesList []string, fromRounded time.Time, toRounded time.Time, interval Interval,
 	clientSecret string, host string, accessToken string, clientToken string) (*GtmDnsTrafficAllPropertiesRspDto, error) {
-	reqDto := NewGtmDnsTrafficAllPropertiesReqDto(zoneNamesList) // the POST body
-	openurl := createOpenUrl(fromRounded, toRounded, interval)   // the POST URL
+	reqDto := NewGtmDnsTrafficAllPropertiesReqDto(zoneNamesList)   // the POST body
+	openurl := createPostOpenUrl(fromRounded, toRounded, interval) // the POST URL
 	log.DefaultLogger.Info("gtmOpenApiQuery", "openurl", openurl)
 
 	// POST to the OPEN API

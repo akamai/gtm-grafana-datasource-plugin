@@ -7,7 +7,7 @@
   "alerting": true,
   "executable": "gpx_akamai-gtm-datasource-plugin",
   "info": {
-    "description": "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics",
+    "description": "Grafana datasource for Akamai Global Traffic Management (GTM) metrics",
     "author": {
       "name": "Akamai Technologies"
     },

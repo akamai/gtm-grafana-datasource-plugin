@@ -27,15 +27,10 @@ const { FormField } = LegacyForms;
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export class QueryEditor extends PureComponent<Props> {
-  getReports = () => {
-    const uri = 'datasource/resource/openapireports';
-    return this.props.datasource.getResource(uri);
-  };
-
   onZoneNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, zoneNames: event.target.value });
-    console.log('zoneNames: ' + event.target.value);
+    onChange({ ...query, zoneName: event.target.value });
+    console.log('zoneName: ' + event.target.value);
     if (event.target.value) {
       onRunQuery();
     }
@@ -45,26 +40,26 @@ export class QueryEditor extends PureComponent<Props> {
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, metricName: event.target.value });
     console.log('metricName: ' + event.target.value);
-    if (query.zoneNames) {
+    if (query.zoneName) {
       onRunQuery();
     }
   };
 
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { zoneNames, metricName } = query;
+    const { zoneName, metricName } = query;
 
     return (
       <div className="gf-form">
         <div>
           <FormField
-            value={zoneNames || ''}
+            value={zoneName || ''}
             labelWidth={4}
             inputWidth={24}
-            placeholder="Enter zone names"
+            placeholder="Enter zone name"
             onChange={this.onZoneNameChange}
-            label="Zones"
-            tooltip="Comma-separted zone names. Metrics for listed zones are added together."
+            label="Zone"
+            tooltip="."
           />
           <FormField
             value={metricName || ''}
