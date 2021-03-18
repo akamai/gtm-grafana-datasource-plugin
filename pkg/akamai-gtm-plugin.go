@@ -31,14 +31,14 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-// The datasource front-end sends zonenames (to graph) as a string. OPEN API POST request needs a zonename list.
-func zoneListFromZone(zoneName string) []string {
-	zoneName = strings.Replace(zoneName, " ", "", -1) // remove spaces
-	zoneName = strings.Replace(zoneName, ",", "", -1) // remove commas
+// The datasource front-end sends domainnames (to graph) as a string. OPEN API POST request needs a domainname list.
+func domainListFromDomain(domainName string) []string {
+	domainName = strings.Replace(domainName, " ", "", -1) // remove spaces
+	domainName = strings.Replace(domainName, ",", "", -1) // remove commas
 
 	var cleanList []string
-	if len(zoneName) > 0 {
-		cleanList = append(cleanList, zoneName)
+	if len(domainName) > 0 {
+		cleanList = append(cleanList, domainName)
 	}
 	return cleanList
 }
@@ -56,7 +56,7 @@ type dataQueryJson struct {
 	DataSourceId  uint   `json:"dataSourceId"`
 	IntervalMs    uint   `json:"intervalMs"`
 	MaxDataPoints uint   `json:"maxDataPoints"`
-	ZoneName      string `json:"zoneName"`
+	DomainName    string `json:"domainName"`
 	MetricName    string `json:"metricName"`
 }
 
@@ -144,12 +144,12 @@ func (td *AkamaiEdgeDnsDatasource) query(ctx context.Context, query backend.Data
 	log.DefaultLogger.Info("query", "query.TimeRange.From", query.TimeRange.From)
 	log.DefaultLogger.Info("query", "query.TimeRange.To", query.TimeRange.To)
 	log.DefaultLogger.Info("query", "maxDataPoints", dqj.MaxDataPoints)
-	log.DefaultLogger.Info("query", "zoneName", dqj.ZoneName)
+	log.DefaultLogger.Info("query", "domainName", dqj.DomainName)
 	log.DefaultLogger.Info("query", "metricName", dqj.MetricName)
 
-	// If ZoneName is empty then ignore the query
-	if len(dqj.ZoneName) == 0 {
-		response.Error = errors.New("Enter a zone name")
+	// If DomainName is empty then ignore the query
+	if len(dqj.DomainName) == 0 {
+		response.Error = errors.New("Enter a domain name")
 		return response
 
 	}
@@ -162,15 +162,15 @@ func (td *AkamaiEdgeDnsDatasource) query(ctx context.Context, query backend.Data
 		return response
 	}
 
-	// 'zoneNameList' is needed for the OPEN API POST body
-	zoneNameList := zoneListFromZone(dqj.ZoneName)
-	if len(zoneNameList) == 0 {
-		response.Error = errors.New("Enter one zone name")
+	// 'domainNameList' is needed for the OPEN API POST body
+	domainNameList := domainListFromDomain(dqj.DomainName)
+	if len(domainNameList) == 0 {
+		response.Error = errors.New("Enter one domain name")
 		return response
 	}
 
 	// The OPEN API returns the data to graph.
-	openApiRspDto, err := gtmOpenApiQuery(zoneNameList, fromRounded, toRounded, interval, dss.ClientSecret, dss.Host, dss.AccessToken, dss.ClientToken)
+	openApiRspDto, err := gtmOpenApiQuery(domainNameList, fromRounded, toRounded, interval, dss.ClientSecret, dss.Host, dss.AccessToken, dss.ClientToken)
 	if err != nil {
 		response.Error = err
 		return response
@@ -207,7 +207,7 @@ func (td *AkamaiEdgeDnsDatasource) query(ctx context.Context, query backend.Data
 	metricName := dqj.MetricName
 	if len(metricName) == 0 {
 		// Metric name not configured. Create the default name.
-		metricName = dqj.ZoneName + " hits"
+		metricName = dqj.DomainName + " hits"
 	}
 
 	// Add data to the response data frame.

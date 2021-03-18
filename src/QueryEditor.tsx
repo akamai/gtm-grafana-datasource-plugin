@@ -27,10 +27,10 @@ const { FormField } = LegacyForms;
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export class QueryEditor extends PureComponent<Props> {
-  onZoneNameChange = (event: ChangeEvent<HTMLInputElement>) => {
+  onDomainNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onChange, query, onRunQuery } = this.props;
-    onChange({ ...query, zoneName: event.target.value });
-    console.log('zoneName: ' + event.target.value);
+    onChange({ ...query, domainName: event.target.value });
+    // console.log('domainName: ' + event.target.value);
     if (event.target.value) {
       onRunQuery();
     }
@@ -39,27 +39,27 @@ export class QueryEditor extends PureComponent<Props> {
   onMetricNameChange = (event: ChangeEvent<HTMLInputElement>) => {
     const { onChange, query, onRunQuery } = this.props;
     onChange({ ...query, metricName: event.target.value });
-    console.log('metricName: ' + event.target.value);
-    if (query.zoneName) {
+    // console.log('metricName: ' + event.target.value);
+    if (query.domainName) {
       onRunQuery();
     }
   };
 
   render() {
     const query = defaults(this.props.query, defaultQuery);
-    const { zoneName, metricName } = query;
+    const { domainName, metricName } = query;
 
     return (
       <div className="gf-form">
         <div>
           <FormField
-            value={zoneName || ''}
-            labelWidth={4}
-            inputWidth={24}
-            placeholder="Enter zone name"
-            onChange={this.onZoneNameChange}
-            label="Zone"
-            tooltip="."
+            value={domainName || ''}
+            labelWidth={8}
+            inputWidth={20}
+            placeholder="Enter domain name"
+            onChange={this.onDomainNameChange}
+            label="Domain"
+            tooltip="Enter one domain name."
           />
           <FormField
             value={metricName || ''}

@@ -17,7 +17,7 @@
 import { DataQuery, DataSourceJsonData } from '@grafana/data';
 
 export interface MyQuery extends DataQuery {
-  zoneName?: string;
+  domainName?: string;
   metricName?: string;
 }
 
