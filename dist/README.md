@@ -1,4 +1,4 @@
-#> Akamai Global Traffic Management (GTM) Datasource
+# Akamai Global Traffic Management (GTM) Datasource
 v1.0.0
 
 Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
