@@ -11,11 +11,11 @@ Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
 
 ## Installing Grafana
 
-![Install Grafana](https://grafana.com/docs/grafana/latest/installation/) details the process of installing Grafana on several operating systems.
+[Install Grafana](https://grafana.com/docs/grafana/latest/installation/) details the process of installing Grafana on several operating systems.
 
 ## Installing this plugin on a local Grafana
 
-* On the ![gtm-grafana-datasource-plugin](https://github.com/akamai/gtm-grafana-datasource-plugin) GitHub repository, 
+* On the [gtm-grafana-datasource-plugin](https://github.com/akamai/gtm-grafana-datasource-plugin) GitHub repository, 
 under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v1.0.0".
 
 * Copy "akamai-gtm-datasource-1.0.0.zip" to your computer.  Unzip the archive.
@@ -52,17 +52,16 @@ to install_dir\data\plugins
 
 ### Grafana configuration
 
-![Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/) 
-describes configuration for each operating system.
+[Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/) describes configuration for each operating system.
 
-* Using a text editor, open the configuration file (as described in ![Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/).
+* Using a text editor, open the configuration file (as described in [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/)).
 * Under the [paths] section, uncomment "plugins".
 * To the right of "plugins =", insert the complete path to the plugin directory.
 * Under the [plugins] section, uncomment "allow_loading_unsigned_plugins".
 * To the right of "allow_loading_unsigned_plugins =", add "akamai-gtm-datasource" (without quotes).
 
 ### Restart Grafana
-![Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/)
+[Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/)
 describes how to restart Grafana for each operating system.
 
 ## "Akamai Edge DNS Datasource" Configuration
