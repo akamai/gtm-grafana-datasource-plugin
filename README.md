@@ -1,4 +1,4 @@
-# Akamai Global Traffic Management (GTM) Datasource
+#> Akamai Global Traffic Management (GTM) Datasource
 v1.0.0
 
 Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
@@ -6,7 +6,7 @@ Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
 ## Prerequisites
 
 * Grafana 7.0 or newer.
-* An Akamai API client with authorization to use the [Load Balancing DNS Traffic All Properties API](https://developer.akamai.com/api/core_features/reporting/load-balancing-dns-traffic-all-properties.html). 
+* An Akamai OPEN API client with authorization to use the [Load Balancing DNS Traffic All Properties API](https://developer.akamai.com/api/core_features/reporting/load-balancing-dns-traffic-all-properties.html). 
 * [Authenticate With EdgeGrid](https://developer.akamai.com/getting-started/edgegrid) provides information to generate the required credentials. Choose the API service named "Reporting API", and set the access level to READ-WRITE.
 
 ## Installing Grafana
@@ -22,32 +22,32 @@ under "Releases", select "Grafana datasource for Akamai Global Traffic Managemen
 
 ### Linux OSs (Debian, Ubuntu, CentOS, Fedora, OpenSuse, Red Hat)
 
-Configuration file: /etc/grafana/grafana.ini
+Configuration file: /etc/grafana/grafana.ini  
 Plugin directory: /var/lib/grafana/plugins
 
 From the unzipped archive, copy one of (as appropriate for your hardware):
 * gpx_akamai-gtm-datasource-plugin_linux_amd64
 * gpx_akamai-gtm-datasource-plugin_linux_arm
-* gpx_akamai-gtm-datasource-plugin_linux_arm64
+* gpx_akamai-gtm-datasource-plugin_linux_arm64  
 to /var/lib/grafana/plugins
 
 ### Macintosh
 
-Configuration file: /usr/local/etc/grafana/grafana.ini
+Configuration file: /usr/local/etc/grafana/grafana.ini  
 Plugin directory: /usr/local/var/lib/grafana/plugins
 
 From the unzipped archive, copy:
-* gpx_akamai-gtm-datasource-plugin_darwin_amd64
+* gpx_akamai-gtm-datasource-plugin_darwin_amd64  
 to /var/lib/grafana/plugins
 
 ### Windows
 
 Grafana can be installed into any directory (install_dir).
-Configuration file: install_dir\conf
+Configuration file: install_dir\conf  
 Plugin directory: install_dir\data\plugins
 
 From the unzipped archive, copy:
-* gpx_akamai-gtm-datasource-plugin_windows_amd64.exe
+* gpx_akamai-gtm-datasource-plugin_windows_amd64.exe  
 to install_dir\data\plugins
 
 ### Grafana configuration
@@ -72,7 +72,7 @@ In the datasource configuration panel, enter your Akamai credentials.
 
 Create a new dashboard and add a panel.
 
-Enter one domain name.
+In each query, enter one domain name. Create additional queries, as needed.
 
 ![Domain](https://github.com/akamai/gtm-grafana-datasource-plugin/blob/develop/static/domains-config.png)
 
