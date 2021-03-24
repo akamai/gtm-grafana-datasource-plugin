@@ -1,5 +1,4 @@
 # Akamai Global Traffic Management (GTM) Datasource
-v1.0.0
 
 Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
 
@@ -23,60 +22,114 @@ under "Releases", select "Grafana datasource for Akamai Global Traffic Managemen
 ### Linux OSs (Debian, Ubuntu, CentOS, Fedora, OpenSuse, Red Hat)
 
 Configuration file: /etc/grafana/grafana.ini  
-Plugin directory: /var/lib/grafana/plugins
+Plugin directory: /var/lib/grafana/plugins  
+Log directory: /var/log/grafana/
+
+Under the plugin directory, create a directory called 'gtm-grafana-datasource'.
+
+From the unzipped archive, copy:
+* LICENSE
+* README.md
+* img (directory and its contents)
+* module.js
+* module.js.LICENSE.txt
+* module.js.map
+* plugin.json  
+to /var/lib/grafana/plugins/gtm-grafana-datasource
 
 From the unzipped archive, copy one of (as appropriate for your hardware):
 * gpx_akamai-gtm-datasource-plugin_linux_amd64
 * gpx_akamai-gtm-datasource-plugin_linux_arm
 * gpx_akamai-gtm-datasource-plugin_linux_arm64  
-to /var/lib/grafana/plugins
+to /var/lib/grafana/plugins/gtm-grafana-datasource
 
 ### Macintosh
 
 Configuration file: /usr/local/etc/grafana/grafana.ini  
-Plugin directory: /usr/local/var/lib/grafana/plugins
+Plugin directory: /usr/local/var/lib/grafana/plugins  
+Log directory: /usr/local/var/log/grafana/
+
+Under the plugin directory, create a directory called 'gtm-grafana-datasource'.
+
+From the unzipped archive, copy:
+* LICENSE
+* README.md
+* img (directory and its contents)
+* module.js
+* module.js.LICENSE.txt
+* module.js.map
+* plugin.json
+to /usr/local/var/lib/grafana/plugins/gtm-grafana-datasource
 
 From the unzipped archive, copy:
 * gpx_akamai-gtm-datasource-plugin_darwin_amd64  
-to /var/lib/grafana/plugins
+to /var/lib/grafana/plugins/gtm-grafana-datasource
 
 ### Windows
 
 Grafana can be installed into any directory (install_dir).
 Configuration file: install_dir\conf  
-Plugin directory: install_dir\data\plugins
+Plugin directory: install_dir\data\plugins  
+Log directory: install_dir\data\log
+
+Under the plugin directory, create a directory called 'gtm-grafana-datasource'.
+
+From the unzipped archive, copy:
+* LICENSE
+* README.md
+* img (directory and its contents)
+* module.js
+* module.js.LICENSE.txt
+* module.js.map
+* plugin.json
+to install_dir\data\plugins\gtm-grafana-datasource
 
 From the unzipped archive, copy:
 * gpx_akamai-gtm-datasource-plugin_windows_amd64.exe  
-to install_dir\data\plugins
+to install_dir\data\plugins\gtm-grafana-datasource
 
 ### Grafana configuration
 
 [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/) describes configuration for each operating system.
 
 * Using a text editor, open the configuration file (as described in [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/)).
-* Under the [paths] section, uncomment "plugins".
+
+* Under the [paths] section header, uncomment "plugins".
 * To the right of "plugins =", insert the complete path to the plugin directory.
-* Under the [plugins] section, uncomment "allow_loading_unsigned_plugins".
+
+* Under the [plugins] section header, uncomment "allow_loading_unsigned_plugins".
 * To the right of "allow_loading_unsigned_plugins =", add "akamai-gtm-datasource" (without quotes).
 
 ### Restart Grafana
 [Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/)
 describes how to restart Grafana for each operating system.
 
-## "Akamai Edge DNS Datasource" Configuration
+Under the log directory for your operating system, in "grafana.log", you should see something similar to:
+```
+t=2021-03-24T10:31:09-0400 lvl=info msg="Registering plugin" logger=plugins id=akamai-gtm-datasource
+```
+
+[Troubleshooting](https://grafana.com/docs/grafana/latest/troubleshooting/) contains troubleshooting tips.
+
+### Log in to Grafana
+[Getting started with Grafana](https://grafana.com/docs/grafana/latest/getting-started/getting-started/) 
+describes how to log in to Grafana.
+
+## "Akamai GTM Datasource" Configuration
+
+Select Configuration (gear icon) -> Datasources -> Akamai GTM Datasource
 
 In the datasource configuration panel, enter your Akamai credentials.
 
-![Data Source](/static/data-source-config.png)
+![Data Source](https://github.com/akamai/gtm-grafana-datasource-plugin/blob/master/static/data-source-config.png)
 
 Create a new dashboard and add a panel.
 
 In each query, enter one domain name. Create additional queries, as needed.
 
-![Domain](/static/domains-config.png)
+![Domain](https://github.com/akamai/gtm-grafana-datasource-plugin/blob/master/static/domains-config.png)
 
 Metric name is optional. If empty then a metric name is automatically generated.
 
-![Metric Name](/static/metric-name-config.png)
+![Metric Name](https://github.com/akamai/gtm-grafana-datasource-plugin/blob/master/static/metric-name-config.png)
 
