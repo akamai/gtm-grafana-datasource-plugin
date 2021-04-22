@@ -1,4 +1,4 @@
-module github.com/grafana/grafana-starter-datasource-backend
+module github.com/akamai/gtm-grafana-datasource-plugin
 
 go 1.15
 

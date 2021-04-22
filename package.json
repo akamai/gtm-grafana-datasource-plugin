@@ -1,6 +1,6 @@
 {
   "name": "akamai-gtm-datasource-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics",
   "scripts": {
     "build": "grafana-toolkit plugin:build",
