@@ -2,11 +2,11 @@
 
 Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
 
-## Install Grafana 7.0 or newer
+## Install Grafana 12.3.1 or newer
 
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/) details the process of installing Grafana on several operating systems.
 
-(Be sure to get version 7.0 or newer.  Your package manager may install an older version.  It's best to go to
+(Be sure to get version 12.3.1 or newer.  Your package manager may install an older version.  It's best to go to
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/) and follow the directions there.)
 
 ## Obtain Akamai API credentials
@@ -81,7 +81,7 @@ From the unzipped archive, copy one of (as appropriate for your hardware):
 * gpx_akamai-gtm-datasource-plugin_linux_arm64  
 to /var/lib/grafana/plugins/gtm-grafana-datasource
 
-### Macintosh
+### macOS (Intel / x86_64)
 
 Configuration file: /usr/local/etc/grafana/grafana.ini  
 Plugin directory: /usr/local/var/lib/grafana/plugins  
@@ -102,6 +102,30 @@ to /usr/local/var/lib/grafana/plugins/gtm-grafana-datasource
 From the unzipped archive, copy:
 * gpx_akamai-gtm-datasource-plugin_darwin_amd64  
 to /var/lib/grafana/plugins/gtm-grafana-datasource
+
+### macOS (Apple Silicon / ARM64)
+
+Configuration file: /opt/homebrew/etc/grafana/grafana.ini
+
+Plugin directory: /opt/homebrew/var/lib/grafana/plugins
+
+Log directory: /opt/homebrew/var/log/grafana
+
+* Under the plugin directory (/opt/homebrew/var/lib/grafana/plugins), create a directory called 'gtm-grafana-datasource'.
+
+From the unzipped archive, copy:
+* LICENSE
+* README.md
+* img (directory and its contents)
+* module.js
+* module.js.LICENSE.txt
+* module.js.map
+* plugin.json  
+
+From the unzipped archive, copy:
+* gpx_akamai-gtm-datasource-plugin_darwin_arm64  
+
+to /opt/homebrew/var/lib/grafana/plugins/gtm-grafana-datasource
 
 ### Windows
 
