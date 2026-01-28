@@ -20,11 +20,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
@@ -47,6 +49,67 @@ const (
 	FIVE_MINUTES          = "FIVE_MINUTES"
 )
 
+const (
+	maxFiveMinuteRange = 48 * time.Hour
+	maxHourlyRange     = 31 * 24 * time.Hour
+	apiLatency         = 15 * time.Minute
+)
+
+func parseAkamaiTime(s string) (time.Time, error) {
+	return time.Parse(time.RFC3339, s)
+}
+
+// Enforce Akamai row limits
+func enforceIntervalLimits(from, to time.Time, interval Interval) (time.Time, time.Time) {
+	switch interval {
+	case FIVE_MINUTES:
+		if to.Sub(from) > maxFiveMinuteRange {
+			from = to.Add(-maxFiveMinuteRange)
+		}
+	case HOUR:
+		if to.Sub(from) > maxHourlyRange {
+			from = to.Add(-maxHourlyRange)
+		}
+	}
+	return from, to
+}
+
+// Canonical Akamai-safe normalization
+func normalizeQueryTimes(from, to time.Time, interval Interval) (time.Time, time.Time, error) {
+	if from.IsZero() || to.IsZero() {
+		return time.Time{}, time.Time{}, errors.New("from/to must be set")
+	}
+
+	nowSafe := time.Now().UTC().Add(-apiLatency)
+
+	// Enforce latency
+	if to.After(nowSafe) {
+		to = nowSafe
+	}
+
+	// Enforce retention (90 days)
+	oldest := time.Now().UTC().Add(-NINETY_DAYS)
+	if to.Before(oldest) {
+		return time.Time{}, time.Time{}, errors.New("time range before available data")
+	}
+	if from.Before(oldest) {
+		from = oldest
+	}
+
+	// Enforce interval limits
+	from, to = enforceIntervalLimits(from, to, interval)
+
+	// Align to interval boundaries
+	from = roundupTimeForInterval(from, interval)
+	to = roundupTimeForInterval(to, interval)
+
+	if !from.Before(to) {
+		return time.Time{}, time.Time{}, errors.New("invalid time range after normalization")
+	}
+
+	return from, to, nil
+}
+
 func calculateInterval(from time.Time, to time.Time, maxDataPoints uint) Interval {
 	// Must use HOUR interval for time ranges over 4 weeks.
 	timeRangeHours := uint(to.Sub(from).Hours())
@@ -65,14 +128,18 @@ func calculateInterval(from time.Time, to time.Time, maxDataPoints uint) Interva
 
 // GTM OPEN API insists that start and end times must be on interval boundaries.
 func roundupTimeForInterval(t time.Time, interval Interval) time.Time {
+	// 1. Force to UTC immediately
+	t = t.UTC()
+
 	switch interval {
 	case FIVE_MINUTES:
-		return t.Round(5 * time.Minute)
+		// Truncate(5m) turns 13:54:32 into 13:50:00 (Perfectly clean)
+		return t.Truncate(5 * time.Minute)
 	case HOUR:
-		return t.Round(time.Hour)
+		// Truncate(1h) turns 13:54:32 into 13:00:00
+		return t.Truncate(time.Hour)
 	default:
-		log.DefaultLogger.Error("roundupTimeForInterval", "unsupported interval:", interval)
-		return t
+		return t.Truncate(time.Minute)
 	}
 }
 
@@ -91,6 +158,13 @@ func limitTimeToOldestData(timeRounded time.Time, oldestDataTime time.Time) time
 
 // Adjust the start (from) and end (to) times
 func adjustQueryTimes(from time.Time, to time.Time, interval Interval) (time.Time, time.Time, error) {
+
+	if from.IsZero() || to.IsZero() {
+		err := errors.New("from or to time is not set (zero time)")
+		log.DefaultLogger.Warn("adjustQueryTimes", "from", from, "to", to, "err", err)
+		return time.Time{}, time.Time{}, err
+	}
+
 	fromRounded := roundupTimeForInterval(from, interval)
 	toRounded := roundupTimeForInterval(to, interval)
 
@@ -113,7 +187,7 @@ func adjustQueryTimes(from time.Time, to time.Time, interval Interval) (time.Tim
 
 // The time format required by OPEN API
 func openApiUrlTimeFormat(t time.Time) string {
-	return url.QueryEscape(t.Format(time.RFC3339))
+	return url.QueryEscape(t.UTC().Format("2006-01-02T15:04:00Z"))
 }
 
 // OPEN API URLs
@@ -186,8 +260,16 @@ type GtmDnsTrafficAllPropertiesRspDto struct {
 // OPEN API ERROR RESPONSE
 
 type Error struct {
-	Title string `json:"title"`
-	Type  string `json:"type"`
+	Title  string `json:"title"`
+	Type   string `json:"type"`
+	Detail string `json:"detail"`
+	//AvailableStartDate string `json:"availableStartDate"`
+	//AvailableEndDate   string `json:"availableEndDate"`
+	AvailableStartDate string `json:"availableStartDate"`
+	AvailableEndDate   string `json:"availableEndDate"`
+
+	RequestedStartDate string `json:"requestedStartDate"`
+	RequestedEndDate   string `json:"requestedEndDate"`
 }
 
 type OpenApiErrorRspDto struct {
@@ -202,8 +284,8 @@ type OpenApiErrorRspDto struct {
 // Verify that the datasource can reach the OPEN API
 func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string, clientToken string) (string, backend.HealthStatus) {
 
-	to := time.Now()                 // now
-	from := to.Add(-5 * time.Minute) // five minutes ago
+	to := time.Now().Add(-24 * time.Hour) // now
+	from := to.Add(-1 * time.Hour)        // five minutes ago
 	interval := Interval(FIVE_MINUTES)
 
 	fromRounded := roundupTimeForInterval(from, interval)
@@ -213,13 +295,22 @@ func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string,
 
 	config := NewEdgegridConfig(clientSecret, host, accessToken, clientToken)
 
+	sess, err := session.New(
+		session.WithSigner(config),
+		session.WithHTTPTracing(true),
+	)
+
+	if err != nil {
+		log.DefaultLogger.Error("Error creating session", "err", err)
+		return err.Error(), backend.HealthStatusError
+	}
 	// Send GET request to the OPEN API
-	apireq, err := client.NewRequest(*config, "GET", openurl, nil)
+	apireq, err := http.NewRequest(http.MethodGet, openurl, nil)
 	if err != nil {
 		log.DefaultLogger.Error("Error creating GET request", "err", err)
 		return err.Error(), backend.HealthStatusError
 	}
-	apiresp, err := client.Do(*config, apireq)
+	apiresp, err := sess.Exec(apireq, nil)
 	if err != nil {
 		log.DefaultLogger.Error("OPEN API communication error", "err", err)
 		return err.Error(), backend.HealthStatusError
@@ -267,49 +358,118 @@ func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string,
 	return "Data source is working", backend.HealthStatusOk
 }
 
-// Get data needed to populate the graph.
-func gtmOpenApiQuery(zoneNamesList []string, fromRounded time.Time, toRounded time.Time, interval Interval,
-	clientSecret string, host string, accessToken string, clientToken string) (*GtmDnsTrafficAllPropertiesRspDto, error) {
-	reqDto := NewGtmDnsTrafficAllPropertiesReqDto(zoneNamesList)   // the POST body
-	openurl := createPostOpenUrl(fromRounded, toRounded, interval) // the POST URL
-	log.DefaultLogger.Info("gtmOpenApiQuery", "openurl", openurl)
+func gtmOpenApiQuery(
+	zoneNamesList []string,
+	from time.Time,
+	to time.Time,
+	interval Interval,
+	clientSecret string,
+	host string,
+	accessToken string,
+	clientToken string,
+) (*GtmDnsTrafficAllPropertiesRspDto, error) {
 
-	// POST to the OPEN API
+	fromRounded, toRounded, err := normalizeQueryTimes(from, to, interval)
+	if err != nil {
+		log.DefaultLogger.Error("Time normalization failed", "err", err)
+		return nil, err
+	}
+
+	reqDto := NewGtmDnsTrafficAllPropertiesReqDto(zoneNamesList)
+	openurl := createPostOpenUrl(fromRounded, toRounded, interval)
+
+	log.DefaultLogger.Info(
+		"gtmOpenApiQuery",
+		"start", fromRounded,
+		"end", toRounded,
+		"interval", interval,
+		"url", openurl,
+	)
+
 	postBodyJson, err := json.Marshal(reqDto)
 	if err != nil {
-		log.DefaultLogger.Error("Error marshaling POST request JSON", "err", err)
 		return nil, err
 	}
-	config := NewEdgegridConfig(clientSecret, host, accessToken, clientToken)
 
-	apireq, err := client.NewRequest(*config, "POST", openurl, bytes.NewBuffer(postBodyJson))
+	config := NewEdgegridConfig(clientSecret, host, accessToken, clientToken)
+	sess, err := session.New(
+		session.WithSigner(config),
+		session.WithHTTPTracing(true),
+	)
 	if err != nil {
-		log.DefaultLogger.Error("Error creating POST request", "err", err)
 		return nil, err
 	}
-	apiresp, err := client.Do(*config, apireq)
+
+	apireq, err := http.NewRequest(http.MethodPost, openurl, bytes.NewBuffer(postBodyJson))
 	if err != nil {
-		log.DefaultLogger.Error("OPEN API communication error", "err", err)
 		return nil, err
+	}
+
+	apiresp, err := sess.Exec(apireq, nil)
+	if err != nil {
+		return nil, fmt.Errorf("OPEN API communication error: %w", err)
 	}
 	defer apiresp.Body.Close()
-	log.DefaultLogger.Info("gtmOpenApiQuery", "Status", apiresp.Status)
 
-	// OPEN API error response
-	if apiresp.StatusCode != 200 {
-		var rspDto OpenApiErrorRspDto // the expected "error" response body
-		err := json.NewDecoder(apiresp.Body).Decode(&rspDto)
-		if err != nil { // A JSON decode error. Not the expected body. Use the response status for the error message.
-			err = errors.New(apiresp.Status)
-		} else {
-			err = errors.New(rspDto.Errors[0].Title) // E.g. "Some of the requested objects are unauthorized: [foo.bar.com]"
-		}
-		log.DefaultLogger.Info("gtmOpenApiQuery", "err", err)
+	bodyBytes, err := io.ReadAll(apiresp.Body)
+	if err != nil {
 		return nil, err
 	}
 
-	// OPEN API normal response
-	var rspDto GtmDnsTrafficAllPropertiesRspDto // the POST response body
-	json.NewDecoder(apiresp.Body).Decode(&rspDto)
+	if apiresp.StatusCode != http.StatusOK {
+		var errDto OpenApiErrorRspDto
+		_ = json.Unmarshal(bodyBytes, &errDto)
+
+		if len(errDto.Errors) > 0 {
+			errDetail := errDto.Errors[0]
+
+			if errDetail.AvailableEndDate != "" {
+				availableEnd, err := parseAkamaiTime(errDetail.AvailableEndDate)
+				if err == nil && toRounded.After(availableEnd) {
+
+					timeGap := toRounded.Sub(availableEnd)
+
+					newFrom := fromRounded.Add(-timeGap)
+
+					log.DefaultLogger.Warn(
+						"Clamping query and shifting window",
+						"oldEnd", toRounded,
+						"newEnd", availableEnd,
+						"newFrom", newFrom,
+					)
+
+					// Re-run query with the whole window moved back
+					return gtmOpenApiQuery(
+						zoneNamesList,
+						newFrom,
+						availableEnd,
+						interval,
+						clientSecret,
+						host,
+						accessToken,
+						clientToken,
+					)
+				}
+			}
+
+			return nil, fmt.Errorf(
+				"Akamai error: %s",
+				errDetail.Detail,
+			)
+		}
+
+		return nil, fmt.Errorf("API error: %s", apiresp.Status)
+	}
+
+	var rspDto GtmDnsTrafficAllPropertiesRspDto
+	if err := json.Unmarshal(bodyBytes, &rspDto); err != nil {
+		return nil, err
+	}
+
+	log.DefaultLogger.Info(
+		"gtmOpenApiQuery success",
+		"rows", rspDto.Metadata.RowCount,
+	)
+
 	return &rspDto, nil
 }

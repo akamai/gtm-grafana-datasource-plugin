@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import React, { ChangeEvent, PureComponent } from 'react';
+import * as React from 'react';
+import { ChangeEvent, PureComponent } from 'react';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { LegacyForms } from '@grafana/ui';
+import { Field, Input } from '@grafana/ui';
 import { MyDataSourceOptions } from './types';
-
-const { FormField } = LegacyForms;
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions> {}
 interface State {}
@@ -31,7 +30,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       ...options.jsonData,
       clientSecret: event.target.value,
     };
-    console.log('clientSecret: ' + event.target.value);
     onOptionsChange({ ...options, jsonData });
   };
 
@@ -41,7 +39,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       ...options.jsonData,
       host: event.target.value,
     };
-    console.log('host: ' + event.target.value);
     onOptionsChange({ ...options, jsonData });
   };
 
@@ -51,7 +48,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       ...options.jsonData,
       accessToken: event.target.value,
     };
-    console.log('accessToken: ' + event.target.value);
     onOptionsChange({ ...options, jsonData });
   };
 
@@ -61,7 +57,6 @@ export class ConfigEditor extends PureComponent<Props, State> {
       ...options.jsonData,
       clientToken: event.target.value,
     };
-    console.log('clientToken: ' + event.target.value);
     onOptionsChange({ ...options, jsonData });
   };
 
@@ -70,47 +65,38 @@ export class ConfigEditor extends PureComponent<Props, State> {
     const { jsonData } = options;
 
     return (
-      <div className="gf-form-group">
-        <div className="gf-form">
-          <FormField
-            label="Client Secret"
-            labelWidth={8}
-            inputWidth={24}
-            onChange={this.onClientSecretChange}
+      <div>
+        <Field label="Client Secret" description="Enter client secret">
+          <Input
             value={jsonData.clientSecret || ''}
+            onChange={this.onClientSecretChange}
             placeholder="Enter client secret"
           />
-        </div>
-        <div className="gf-form">
-          <FormField
-            label="Host"
-            labelWidth={8}
-            inputWidth={24}
-            onChange={this.onHostChange}
+        </Field>
+
+        <Field label="Host" description="Enter host">
+          <Input
             value={jsonData.host || ''}
+            onChange={this.onHostChange}
             placeholder="Enter host"
           />
-        </div>
-        <div className="gf-form">
-          <FormField
-            label="Access Token"
-            labelWidth={8}
-            inputWidth={24}
-            onChange={this.onAccessTokenChange}
+        </Field>
+
+        <Field label="Access Token" description="Enter access token">
+          <Input
             value={jsonData.accessToken || ''}
+            onChange={this.onAccessTokenChange}
             placeholder="Enter access token"
           />
-        </div>
-        <div className="gf-form">
-          <FormField
-            label="Client Token"
-            labelWidth={8}
-            inputWidth={24}
-            onChange={this.onClientTokenChange}
+        </Field>
+
+        <Field label="Client Token" description="Enter client token">
+          <Input
             value={jsonData.clientToken || ''}
+            onChange={this.onClientTokenChange}
             placeholder="Enter client token"
           />
-        </div>
+        </Field>
       </div>
     );
   }
