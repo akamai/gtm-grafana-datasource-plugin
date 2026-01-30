@@ -16,16 +16,21 @@
 package main
 
 import (
+	"os"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
-	"os"
 )
 
 func main() {
 	// Start listening to requests sent from Grafana. This call is blocking so
 	// it won't finish until Grafana shutsdown the process or the plugin chooses
 	// to exit.
-	err := datasource.Serve(newDatasource())
+	err := datasource.Manage(
+		"akamai-gtm-datasource",
+		newDataSourceInstance,
+		datasource.ManageOpts{},
+	)
 
 	// Log any error if we could start the plugin.
 	if err != nil {

@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -61,8 +60,8 @@ type dataQueryJson struct {
 }
 
 // Grafana structures and functions
-func newDataSourceInstance(setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &instanceSettings{
+func newDataSourceInstance(ctx context.Context, setting backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	return &AkamaiEdgeDnsDatasource{
 		httpClient: &http.Client{},
 	}, nil
 }
@@ -75,24 +74,9 @@ type instanceSettings struct {
 func (s *instanceSettings) Dispose() {
 }
 
-func newDatasource() datasource.ServeOpts {
-	// Creates a instance manager for the plugin. The function passed
-	// into `NewInstanceManger` is called when the instance is created
-	// for the first time or when datasource configuration changes.
-	im := datasource.NewInstanceManager(newDataSourceInstance)
-
-	ds := &AkamaiEdgeDnsDatasource{
-		im: im,
-	}
-
-	return datasource.ServeOpts{
-		QueryDataHandler:   ds,
-		CheckHealthHandler: ds,
-	}
-}
-
 type AkamaiEdgeDnsDatasource struct {
-	im instancemgmt.InstanceManager
+	im         instancemgmt.InstanceManager
+	httpClient *http.Client
 }
 
 // QueryData handles multiple queries and returns multiple responses.
@@ -114,31 +98,49 @@ func (td *AkamaiEdgeDnsDatasource) QueryData(ctx context.Context, req *backend.Q
 
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
-		res := td.query(ctx, q, dss)
+		res, err := td.query(ctx, q, dss)
+		if err != nil {
+			// Create an error frame so the error shows in the panel
+			errorFrame := data.NewFrame("Error")
+			errorFrame.Meta = &data.FrameMeta{
+				Type: data.FrameTypeTable,
+			}
+			errorFrame.Fields = append(errorFrame.Fields,
+				data.NewField("Error", nil, []string{err.Error()}),
+			)
 
-		// save the response in a hashmap
-		// based on with RefID as identifier
-		response.Responses[q.RefID] = res
+			response.Responses[q.RefID] = backend.DataResponse{
+				Frames: data.Frames{errorFrame},
+				Error:  err,
+			}
+		} else {
+			response.Responses[q.RefID] = *res
+		}
 	}
 
 	return response, nil
 }
 
-func (td *AkamaiEdgeDnsDatasource) query(ctx context.Context, query backend.DataQuery, dss dataSourceSettingsJson) backend.DataResponse {
-	// log.DefaultLogger.Info("QueryData", "clientSecret", dss.ClientSecret)
-	// log.DefaultLogger.Info("QueryData", "host", dss.Host)
-	// log.DefaultLogger.Info("QueryData", "accessToken", dss.AccessToken)
-	// log.DefaultLogger.Info("QueryData", "clientToken", dss.ClientToken)
+func errorFrame(msg string) *backend.DataResponse {
+	frame := data.NewFrame("Error")
+	frame.Fields = append(frame.Fields, data.NewField("message", nil, []string{msg}))
+	frame.Meta = &data.FrameMeta{
+		Type: data.FrameTypeTable,
+	}
 
+	return &backend.DataResponse{
+		Frames: data.Frames{frame},
+		Error:  errors.New(msg),
+	}
+}
+
+func (td *AkamaiEdgeDnsDatasource) query(ctx context.Context, query backend.DataQuery, dss dataSourceSettingsJson) (*backend.DataResponse, error) {
 	log.DefaultLogger.Info("QueryData", "RefID", query.RefID)
 
-	response := backend.DataResponse{}
-
-	// Unmarshal the (query request input) json into the 'dataQueryJson' structure
+	// Unmarshal the query JSON into your struct
 	var dqj dataQueryJson
-	response.Error = json.Unmarshal(query.JSON, &dqj)
-	if response.Error != nil {
-		return response
+	if err := json.Unmarshal(query.JSON, &dqj); err != nil {
+		return errorFrame("Failed to parse query JSON: " + err.Error()), nil
 	}
 
 	log.DefaultLogger.Info("query", "query.TimeRange.From", query.TimeRange.From)
@@ -147,85 +149,62 @@ func (td *AkamaiEdgeDnsDatasource) query(ctx context.Context, query backend.Data
 	log.DefaultLogger.Info("query", "domainName", dqj.DomainName)
 	log.DefaultLogger.Info("query", "metricName", dqj.MetricName)
 
-	// If DomainName is empty then ignore the query
+	// Validate domain name presence
 	if len(dqj.DomainName) == 0 {
-		response.Error = errors.New("Enter a domain name")
-		return response
-
+		return errorFrame("Please enter a domain name"), nil
 	}
 
-	// 'interval' and fixed-up 'from' and 'to' times are needed to make the OPEN API POST URL
+	// Calculate interval and adjust times
 	interval := calculateInterval(query.TimeRange.From, query.TimeRange.To, dqj.MaxDataPoints)
 	fromRounded, toRounded, err := adjustQueryTimes(query.TimeRange.From, query.TimeRange.To, interval)
 	if err != nil {
-		response.Error = err
-		return response
+		return errorFrame("Failed to adjust query times: " + err.Error()), nil
 	}
 
-	// 'domainNameList' is needed for the OPEN API POST body
 	domainNameList := domainListFromDomain(dqj.DomainName)
 	if len(domainNameList) == 0 {
-		response.Error = errors.New("Enter one domain name")
-		return response
+		return errorFrame("Enter at least one valid domain name"), nil
 	}
 
-	// The OPEN API returns the data to graph.
+	// Query the OPEN API
 	openApiRspDto, err := gtmOpenApiQuery(domainNameList, fromRounded, toRounded, interval, dss.ClientSecret, dss.Host, dss.AccessToken, dss.ClientToken)
 	if err != nil {
-		response.Error = err
-		return response
+		return errorFrame("Failed to fetch data from API: " + err.Error()), nil
 	}
 
-	// The number of datapoints in the response
 	numDataRows := len(openApiRspDto.Data)
 	log.DefaultLogger.Info("query", "numDataRows", numDataRows)
 
-	// Create slices that will be added to the dataframe.
 	sampletime := make([]time.Time, numDataRows)
 	hitspersec := make([]float64, numDataRows)
 
-	// The response contains data for 'hits'.
-
-	// Loop through the OPEN API response. Put data items into the dataframe slices.
 	for i, datum := range openApiRspDto.Data {
 		unixms, err := strconv.ParseInt(datum.StartDateTime, 10, 64)
 		if err != nil {
 			log.DefaultLogger.Error("Error parsing time", "err", err)
-			response.Error = err
-			return response
+			return errorFrame("Invalid time format in API response: " + err.Error()), nil
 		}
 		sampletime[i] = time.Unix(unixms/1000, 0)
-
-		// Ignore the error. Some data will be "N/A", in which case hits will be zero.
-		hitspersec[i], _ = strconv.ParseFloat(datum.Hits, 64)
+		hitspersec[i], _ = strconv.ParseFloat(datum.Hits, 64) // ignore parse errors, treat as zero
 	}
 
-	// Create the response data frame.
 	frame := data.NewFrame("response")
-
-	// If the user configured a metric name then use that. Else generate a metric name.
 	metricName := dqj.MetricName
 	if len(metricName) == 0 {
-		// Metric name not configured. Create the default name.
 		metricName = dqj.DomainName + " hits"
 	}
 
-	// Add data to the response data frame.
-	frame.Fields = append(frame.Fields, data.NewField("time", nil, sampletime))     // add the time dimension to dataframe
-	frame.Fields = append(frame.Fields, data.NewField(metricName, nil, hitspersec)) // add values to dataframe
+	frame.Fields = append(frame.Fields, data.NewField("time", nil, sampletime))
+	frame.Fields = append(frame.Fields, data.NewField(metricName, nil, hitspersec))
 
-	// Add the dataframe to the response
+	response := &backend.DataResponse{}
 	response.Frames = append(response.Frames, frame)
 
-	return response
+	return response, nil
 }
 
 // The 'Save & Test' button on the datasource configuration page allows users to verify that the datasource is working as expected.
 func (td *AkamaiEdgeDnsDatasource) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	// log.DefaultLogger.Info("CheckHealth", "clientSecret", ds.ClientSecret)
-	// log.DefaultLogger.Info("CheckHealth", "host", ds.Host)
-	// log.DefaultLogger.Info("CheckHealth", "accessToken", ds.AccessToken)
-	// log.DefaultLogger.Info("CheckHealth", "clientToken", ds.ClientToken)
 
 	var ds dataSourceSettingsJson
 	err := json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &ds)
