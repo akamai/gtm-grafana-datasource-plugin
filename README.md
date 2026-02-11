@@ -51,9 +51,9 @@ the requests.
 ## Installing this plugin on a local Grafana
 
 * On the [gtm-grafana-datasource-plugin](https://github.com/akamai/gtm-grafana-datasource-plugin) GitHub repository, 
-under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v1.0.1".
+under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v2.0.0".
 
-* Copy "akamai-gtm-datasource-1.0.1.zip" to your computer.  Unzip the archive.
+* Copy "akamai-gtm-datasource-2.0.0.zip" to your computer.  Unzip the archive.
 
 ### Linux OSs (Debian, Ubuntu, CentOS, Fedora, OpenSuse, Red Hat)
 
@@ -168,6 +168,8 @@ plugins = /var/lib/grafana/plugins
   NOTE: The plugin directory differs by operating system!
 
 * Under the [plugins] section header, uncomment "allow_loading_unsigned_plugins".
+  
+  **NOTE:** This step is required because the Akamai GTM datasource plugin is not signed by Grafana.
 * To the right of "allow_loading_unsigned_plugins =", add "akamai-gtm-datasource" (without quotes).  For example:
 ```
 [plugins]
