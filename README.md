@@ -168,6 +168,7 @@ plugins = /var/lib/grafana/plugins
   NOTE: The plugin directory differs by operating system!
 
 * Under the [plugins] section header, uncomment "allow_loading_unsigned_plugins".
+**NOTE:** This step is required because the Akamai GTM datasource plugin is not signed by Grafana.
 * To the right of "allow_loading_unsigned_plugins =", add "akamai-gtm-datasource" (without quotes).  For example:
 ```
 [plugins]
