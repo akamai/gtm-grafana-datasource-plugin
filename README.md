@@ -20,7 +20,7 @@ You need to create an "API Client" with authorization to use the
 See the "Get Started" section of [Reporting API v1](https://developer.akamai.com/api/core_features/reporting/v1.html)
 which says, "To enable this API, choose the API service named reporting-api, and set the access level to READ-WRITE".
 
-Follow directions at [Authenticate With EdgeGrid](https://developer.akamai.com/getting-started/edgegrid) to generate
+Follow directions at [Authenticate With EdgeGrid](https://techdocs.akamai.com/developer/docs/edgegrid) to generate
 the required client credentials.
 
 A customized version of those directions follows:
@@ -44,7 +44,7 @@ A customized version of those directions follows:
 
 The credentials will later be entered into "Akamai GTM Datasource" configuration.
 
-Note that Step 2 in [Authenticate With EdgeGrid](https://developer.akamai.com/getting-started/edgegrid)
+Note that Step 2 in [Authenticate With EdgeGrid](https://techdocs.akamai.com/developer/docs/edgegrid)
 "Decide which tool you’ll use to make requests" is not necessary. "Akamai GTM Datasource" makes
 the requests.
 
@@ -189,7 +189,7 @@ t=2021-03-24T10:31:09-0400 lvl=info msg="Registering plugin" logger=plugins id=a
 [Troubleshooting](https://grafana.com/docs/grafana/latest/troubleshooting/) contains troubleshooting tips.
 
 ### Log in to Grafana
-[Getting started with Grafana](https://grafana.com/docs/grafana/latest/getting-started/getting-started/) 
+[Getting started with Grafana](https://grafana.com/docs/grafana/latest/fundamentals/getting-started/) 
 describes how to log in to Grafana.  The default username/password are: admin/admin.
 
 ## "Akamai GTM Datasource" Configuration
