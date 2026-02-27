@@ -15,14 +15,12 @@
  */
 
 import defaults from 'lodash/defaults';
-
 import React, { ChangeEvent, PureComponent } from 'react';
-import { QueryEditorProps } from '@grafana/data';
-import { LegacyForms } from '@grafana/ui';
-import { DataSource } from './DataSource';
-import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
+import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { InlineField, Input, Combobox, ComboboxOption } from '@grafana/ui';
 
-const { FormField } = LegacyForms;
+import { DataSource } from './Datasource';
+import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -52,23 +50,27 @@ export class QueryEditor extends PureComponent<Props> {
     return (
       <div className="gf-form">
         <div>
-          <FormField
-            value={domainName || ''}
-            labelWidth={8}
-            inputWidth={20}
-            placeholder="Enter domain name"
-            onChange={this.onDomainNameChange}
-            label="Domain"
-            tooltip="Enter one domain name."
-          />
-          <FormField
-            value={metricName || ''}
-            labelWidth={8}
-            inputWidth={20}
-            onChange={this.onMetricNameChange}
-            label="Metric Name"
-            tooltip="Graphed metric's name. If empty, a name is generated."
-          />
+          <InlineField 
+          label ="Domain"
+          tooltip="Enter one domain name"
+          >
+            <Input
+              value={domainName || ''}
+              onChange={this.onDomainNameChange}
+              placeholder='Enter one domain name'
+            />
+          </InlineField>
+
+          <InlineField 
+          label ="Metric name"
+          tooltip="Graphed metric's name."
+          >
+            <Input
+              value={metricName || ''}
+              onChange={this.onMetricNameChange}
+              placeholder='Enter metric name'
+            />
+          </InlineField>
         </div>
       </div>
     );

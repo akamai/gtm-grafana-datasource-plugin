@@ -20,11 +20,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/client-v1"
-	"github.com/akamai/AkamaiOPEN-edgegrid-golang/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/edgegrid"
+	"github.com/akamai/AkamaiOPEN-edgegrid-golang/v12/pkg/session"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 )
@@ -91,6 +92,13 @@ func limitTimeToOldestData(timeRounded time.Time, oldestDataTime time.Time) time
 
 // Adjust the start (from) and end (to) times
 func adjustQueryTimes(from time.Time, to time.Time, interval Interval) (time.Time, time.Time, error) {
+
+	if from.IsZero() || to.IsZero() {
+		err := errors.New("from or to time is not set (zero time)")
+		log.DefaultLogger.Warn("adjustQueryTimes", "from", from, "to", to, "err", err)
+		return time.Time{}, time.Time{}, err
+	}
+
 	fromRounded := roundupTimeForInterval(from, interval)
 	toRounded := roundupTimeForInterval(to, interval)
 
@@ -201,65 +209,58 @@ type OpenApiErrorRspDto struct {
 
 // Verify that the datasource can reach the OPEN API
 func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string, clientToken string) (string, backend.HealthStatus) {
-
-	to := time.Now()                 // now
-	from := to.Add(-5 * time.Minute) // five minutes ago
+	to := time.Now()
+	from := to.Add(-5 * time.Minute)
 	interval := Interval(FIVE_MINUTES)
 
 	fromRounded := roundupTimeForInterval(from, interval)
 	toRounded := roundupTimeForInterval(to, interval)
-	openurl := createTestOpenUrl(fromRounded, toRounded, interval, "-fake-") // The URL
+	openurl := createTestOpenUrl(fromRounded, toRounded, interval, "-fake-")
 	log.DefaultLogger.Info("gtmOpenApiHealthCheck", "openurl", openurl)
 
 	config := NewEdgegridConfig(clientSecret, host, accessToken, clientToken)
+	sess, err := session.New(session.WithSigner(config))
+	if err != nil {
+		return err.Error(), backend.HealthStatusError
+	}
 
-	// Send GET request to the OPEN API
-	apireq, err := client.NewRequest(*config, "GET", openurl, nil)
+	apireq, err := http.NewRequest(http.MethodGet, openurl, nil)
 	if err != nil {
 		log.DefaultLogger.Error("Error creating GET request", "err", err)
 		return err.Error(), backend.HealthStatusError
 	}
-	apiresp, err := client.Do(*config, apireq)
+
+	apiresp, err := sess.Exec(apireq, nil)
 	if err != nil {
 		log.DefaultLogger.Error("OPEN API communication error", "err", err)
 		return err.Error(), backend.HealthStatusError
 	}
-
+	defer apiresp.Body.Close()
 	log.DefaultLogger.Info("gtmOpenApiHealthCheck", "Status (403 expected)", apiresp.Status)
 
-	// 403 Forbidden is expected because -test- is not a valid zone name.
-
-	// Not a 403 response: datasource failed.
 	if apiresp.StatusCode != 403 {
 		var rspDto OpenApiErrorRspDto
 		err := json.NewDecoder(apiresp.Body).Decode(&rspDto)
 		msg := "Unexpected status code. Datasource failed: "
-		if err != nil { // A JSON decode error. Not the expected body. Use the response status for the error message.
+		if err != nil || len(rspDto.Errors) == 0 { // A JSON decode error. Not the expected body. Use the response status for the error message.
 			msg += apiresp.Status
 		} else {
-			msg += rspDto.Errors[0].Title
+			msg += " - " + rspDto.Errors[0].Title
 		}
 		log.DefaultLogger.Error("gtmOpenApiTest", "msg", msg)
 		return msg, backend.HealthStatusError // RETURN
 	}
 
-	// 403 response
 	var rspDto OpenApiErrorRspDto
 	err = json.NewDecoder(apiresp.Body).Decode(&rspDto)
-
-	// 403 response but not the expected body: datasource failed.
-	if err != nil {
+	if err != nil || len(rspDto.Errors) == 0 {
 		msg := "Unexpected response format. Datasource failed: " + apiresp.Status
 		log.DefaultLogger.Error("gtmOpenApiTest", "msg", msg)
 		return msg, backend.HealthStatusError // RETURN
 	}
 
-	// 403 response with the expected body
-	errorTitle := rspDto.Errors[0].Title
-
-	// 403 response but not the expected error: datasource failed.
-	if errorTitle != "Some of the requested objects are unauthorized: [-fake-]" {
-		msg := "Unexpected error type. Datasource failed: " + errorTitle
+	if rspDto.Errors[0].Title != "Some of the requested objects are unauthorized: [-fake-]" {
+		msg := "Unexpected error type. Datasource failed: " + rspDto.Errors[0].Title
 		log.DefaultLogger.Error("gtmOpenApiTest", "msg", msg)
 		return msg, backend.HealthStatusError // RETURN
 	}
@@ -267,12 +268,14 @@ func gtmOpenApiHealthCheck(clientSecret string, host string, accessToken string,
 	return "Data source is working", backend.HealthStatusOk
 }
 
-// Get data needed to populate the graph.
 func gtmOpenApiQuery(zoneNamesList []string, fromRounded time.Time, toRounded time.Time, interval Interval,
 	clientSecret string, host string, accessToken string, clientToken string) (*GtmDnsTrafficAllPropertiesRspDto, error) {
-	reqDto := NewGtmDnsTrafficAllPropertiesReqDto(zoneNamesList)   // the POST body
+
+	reqDto := NewGtmDnsTrafficAllPropertiesReqDto(zoneNamesList) // the POST body
+	//path := createPostOpenUrl(fromRounded, toRounded, interval)
+	//openurl := fmt.Sprintf("https://%s%s", host, path) // the POST URL
 	openurl := createPostOpenUrl(fromRounded, toRounded, interval) // the POST URL
-	log.DefaultLogger.Info("gtmOpenApiQuery", "openurl", openurl)
+	log.DefaultLogger.Info("gtmOpenApiQuery", "fullUrl", openurl)
 
 	// POST to the OPEN API
 	postBodyJson, err := json.Marshal(reqDto)
@@ -281,35 +284,34 @@ func gtmOpenApiQuery(zoneNamesList []string, fromRounded time.Time, toRounded ti
 		return nil, err
 	}
 	config := NewEdgegridConfig(clientSecret, host, accessToken, clientToken)
-
-	apireq, err := client.NewRequest(*config, "POST", openurl, bytes.NewBuffer(postBodyJson))
+	sess, err := session.New(session.WithSigner(config))
 	if err != nil {
-		log.DefaultLogger.Error("Error creating POST request", "err", err)
 		return nil, err
 	}
-	apiresp, err := client.Do(*config, apireq)
+
+	apireq, err := http.NewRequest(http.MethodPost, openurl, bytes.NewBuffer(postBodyJson))
 	if err != nil {
-		log.DefaultLogger.Error("OPEN API communication error", "err", err)
+		return nil, err
+	}
+
+	apireq.Header.Set("Content-Type", "application/json")
+
+	apiresp, err := sess.Exec(apireq, nil)
+	if err != nil {
 		return nil, err
 	}
 	defer apiresp.Body.Close()
 	log.DefaultLogger.Info("gtmOpenApiQuery", "Status", apiresp.Status)
 
-	// OPEN API error response
 	if apiresp.StatusCode != 200 {
-		var rspDto OpenApiErrorRspDto // the expected "error" response body
-		err := json.NewDecoder(apiresp.Body).Decode(&rspDto)
-		if err != nil { // A JSON decode error. Not the expected body. Use the response status for the error message.
-			err = errors.New(apiresp.Status)
-		} else {
-			err = errors.New(rspDto.Errors[0].Title) // E.g. "Some of the requested objects are unauthorized: [foo.bar.com]"
+		var rspDto OpenApiErrorRspDto
+		if err := json.NewDecoder(apiresp.Body).Decode(&rspDto); err != nil || len(rspDto.Errors) == 0 {
+			return nil, errors.New(apiresp.Status)
 		}
-		log.DefaultLogger.Info("gtmOpenApiQuery", "err", err)
-		return nil, err
+		return nil, errors.New(rspDto.Errors[0].Title)
 	}
 
-	// OPEN API normal response
-	var rspDto GtmDnsTrafficAllPropertiesRspDto // the POST response body
+	var rspDto GtmDnsTrafficAllPropertiesRspDto
 	json.NewDecoder(apiresp.Body).Decode(&rspDto)
 	return &rspDto, nil
 }

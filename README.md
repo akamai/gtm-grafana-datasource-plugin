@@ -2,11 +2,11 @@
 
 Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
 
-## Install Grafana 7.0 or newer
+## Install Grafana 12.3.1 or newer
 
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/) details the process of installing Grafana on several operating systems.
 
-(Be sure to get version 7.0 or newer.  Your package manager may install an older version.  It's best to go to
+(Be sure to get version 12.3.1 or newer.  Your package manager may install an older version.  It's best to go to
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/) and follow the directions there.)
 
 ## Obtain Akamai API credentials
@@ -20,7 +20,7 @@ You need to create an "API Client" with authorization to use the
 See the "Get Started" section of [Reporting API v1](https://developer.akamai.com/api/core_features/reporting/v1.html)
 which says, "To enable this API, choose the API service named reporting-api, and set the access level to READ-WRITE".
 
-Follow directions at [Authenticate With EdgeGrid](https://developer.akamai.com/getting-started/edgegrid) to generate
+Follow directions at [Authenticate With EdgeGrid](https://techdocs.akamai.com/developer/docs/edgegrid) to generate
 the required client credentials.
 
 A customized version of those directions follows:
@@ -44,16 +44,16 @@ A customized version of those directions follows:
 
 The credentials will later be entered into "Akamai GTM Datasource" configuration.
 
-Note that Step 2 in [Authenticate With EdgeGrid](https://developer.akamai.com/getting-started/edgegrid)
+Note that Step 2 in [Authenticate With EdgeGrid](https://techdocs.akamai.com/developer/docs/edgegrid)
 "Decide which tool you’ll use to make requests" is not necessary. "Akamai GTM Datasource" makes
 the requests.
 
 ## Installing this plugin on a local Grafana
 
 * On the [gtm-grafana-datasource-plugin](https://github.com/akamai/gtm-grafana-datasource-plugin) GitHub repository, 
-under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v1.0.1".
+under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v2.0.0".
 
-* Copy "akamai-gtm-datasource-1.0.1.zip" to your computer.  Unzip the archive.
+* Copy "akamai-gtm-datasource-2.0.0.zip" to your computer.  Unzip the archive.
 
 ### Linux OSs (Debian, Ubuntu, CentOS, Fedora, OpenSuse, Red Hat)
 
@@ -81,7 +81,7 @@ From the unzipped archive, copy one of (as appropriate for your hardware):
 * gpx_akamai-gtm-datasource-plugin_linux_arm64  
 to /var/lib/grafana/plugins/gtm-grafana-datasource
 
-### Macintosh
+### macOS (Intel / x86_64)
 
 Configuration file: /usr/local/etc/grafana/grafana.ini  
 Plugin directory: /usr/local/var/lib/grafana/plugins  
@@ -102,6 +102,30 @@ to /usr/local/var/lib/grafana/plugins/gtm-grafana-datasource
 From the unzipped archive, copy:
 * gpx_akamai-gtm-datasource-plugin_darwin_amd64  
 to /var/lib/grafana/plugins/gtm-grafana-datasource
+
+### macOS (Apple Silicon / ARM64)
+
+Configuration file: /opt/homebrew/etc/grafana/grafana.ini
+
+Plugin directory: /opt/homebrew/var/lib/grafana/plugins
+
+Log directory: /opt/homebrew/var/log/grafana
+
+* Under the plugin directory (/opt/homebrew/var/lib/grafana/plugins), create a directory called 'gtm-grafana-datasource'.
+
+From the unzipped archive, copy:
+* LICENSE
+* README.md
+* img (directory and its contents)
+* module.js
+* module.js.LICENSE.txt
+* module.js.map
+* plugin.json  
+
+From the unzipped archive, copy:
+* gpx_akamai-gtm-datasource-plugin_darwin_arm64  
+
+to /opt/homebrew/var/lib/grafana/plugins/gtm-grafana-datasource
 
 ### Windows
 
@@ -144,6 +168,8 @@ plugins = /var/lib/grafana/plugins
   NOTE: The plugin directory differs by operating system!
 
 * Under the [plugins] section header, uncomment "allow_loading_unsigned_plugins".
+  
+  **NOTE:** This step is required because the Akamai GTM datasource plugin is not signed by Grafana.
 * To the right of "allow_loading_unsigned_plugins =", add "akamai-gtm-datasource" (without quotes).  For example:
 ```
 [plugins]
@@ -163,7 +189,7 @@ t=2021-03-24T10:31:09-0400 lvl=info msg="Registering plugin" logger=plugins id=a
 [Troubleshooting](https://grafana.com/docs/grafana/latest/troubleshooting/) contains troubleshooting tips.
 
 ### Log in to Grafana
-[Getting started with Grafana](https://grafana.com/docs/grafana/latest/getting-started/getting-started/) 
+[Getting started with Grafana](https://grafana.com/docs/grafana/latest/fundamentals/getting-started/) 
 describes how to log in to Grafana.  The default username/password are: admin/admin.
 
 ## "Akamai GTM Datasource" Configuration

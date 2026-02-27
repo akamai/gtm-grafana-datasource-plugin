@@ -28,3 +28,7 @@ e2e-results/
 
 # Editor
 .idea
+.DS_Store
+dist/gpx_*
+dist/gpx_akamai-gtm-datasource-plugin_*
+dist/
