@@ -1,6 +1,6 @@
 {
   "name": "akamai-gtm-datasource-plugin",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
@@ -33,7 +33,7 @@
     "@types/node": "^25.0.9",
     "@typescript-eslint/eslint-plugin": "^8.53.1",
     "@typescript-eslint/parser": "^8.53.1",
-    "copy-webpack-plugin": "^13.0.1",
+    "copy-webpack-plugin": "^14.0.0",
     "css-loader": "^7.1.2",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
@@ -57,30 +57,33 @@
     "terser-webpack-plugin": "^5.3.16",
     "ts-node": "^10.9.2",
     "typescript": "5.9.3",
-    "webpack": "^5.104.1",
+    "webpack": "^5.105.3",
     "webpack-cli": "^6.0.1",
     "webpack-livereload-plugin": "^3.0.2",
-    "webpack-subresource-integrity": "^5.1.0",
+    "webpack-subresource-integrity": "^5.2.0-rc.1",
     "webpack-virtual-modules": "^0.6.2"
   },
   "resolutions": {
+    "serialize-javascript": "^7.0.3",
     "rxjs": "7.8.2",
-    "@types/react": "19.2.3",
-    "@types/react-dom": "19.2.3"
+    "@types/react": "18.0.37",
+    "@types/react-dom": "18.0.11",
+    "dompurify": ">=3.3.2",
+    "immutable": ">=5.1.5",
+    "glob": ">=10.5.0"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
   "dependencies": {
     "@emotion/css": "11.13.5",
-    "@grafana/data": "12.3.1",
-    "@grafana/i18n": "^12.3.1",
-    "@grafana/runtime": "12.3.1",
-    "@grafana/schema": "^12.3.1",
-    "@grafana/ui": "12.3.1",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
-    "react-select": "^5.10.2"
+    "@grafana/data": "12.4.0",
+    "@grafana/i18n": "^12.4.0",
+    "@grafana/runtime": "12.4.0",
+    "@grafana/schema": "^12.4.0",
+    "@grafana/ui": "12.4.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "packageManager": "yarn@1.22.22"
 }

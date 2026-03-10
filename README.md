@@ -2,11 +2,14 @@
 
 Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
 
-## Install Grafana 12.3.1 or newer
+**IMPORTANT**:
+***Documentation Visibility Notice*** > Because this is an unsigned plugin, this README and its setup instructions may not be visible within the Grafana Plugins Catalog depending on your version of Grafana. Please always refer to this GitHub repository for the most up-to-date installation and configuration steps.
+
+## Install Grafana 12.4.0 or newer
 
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/) details the process of installing Grafana on several operating systems.
 
-(Be sure to get version 12.3.1 or newer.  Your package manager may install an older version.  It's best to go to
+(Be sure to get version 12.4.0 or newer.  Your package manager may install an older version.  It's best to go to
 [Install Grafana](https://grafana.com/docs/grafana/latest/installation/) and follow the directions there.)
 
 ## Obtain Akamai API credentials
@@ -51,9 +54,9 @@ the requests.
 ## Installing this plugin on a local Grafana
 
 * On the [gtm-grafana-datasource-plugin](https://github.com/akamai/gtm-grafana-datasource-plugin) GitHub repository, 
-under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v2.0.0".
+under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v2.0.1".
 
-* Copy "akamai-gtm-datasource-2.0.0.zip" to your computer.  Unzip the archive.
+* Copy "akamai-gtm-datasource-2.0.1.zip" to your computer.  Unzip the archive.
 
 ### Linux OSs (Debian, Ubuntu, CentOS, Fedora, OpenSuse, Red Hat)
 
