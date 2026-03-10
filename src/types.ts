@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import type { DataQuery, DataSourceJsonData } from '@grafana/schema';
 
 export interface MyQuery extends DataQuery {
   domainName?: string;
