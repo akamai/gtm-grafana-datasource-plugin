@@ -64,13 +64,11 @@
     "webpack-virtual-modules": "^0.6.2"
   },
   "resolutions": {
-    "serialize-javascript": "^7.0.3",
     "rxjs": "7.8.2",
     "@types/react": "18.0.37",
     "@types/react-dom": "18.0.11",
     "dompurify": ">=3.3.2",
-    "immutable": ">=5.1.5",
-    "glob": ">=10.5.0"
+    "immutable": ">=5.1.5"
   },
   "engines": {
     "node": ">=18"
