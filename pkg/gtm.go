@@ -45,7 +45,7 @@ type Interval string
 
 const (
 	HOUR         Interval = "HOUR"
-	FIVE_MINUTES          = "FIVE_MINUTES"
+	FIVE_MINUTES Interval = "FIVE_MINUTES"
 )
 
 func calculateInterval(from time.Time, to time.Time, maxDataPoints uint) Interval {
