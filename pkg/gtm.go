@@ -31,7 +31,7 @@ import (
 )
 
 // GTM "load-balancing-dns-traffic-all-properties" OPEN API documentation
-// https://developer.akamai.com/api/core_features/reporting/load-balancing-dns-traffic-all-properties.html
+// https://techdocs.akamai.com/reporting/reference/api
 
 // Akamai OPEN EdgeGrid for GoLang
 // https://github.com/akamai/AkamaiOPEN-edgegrid-golang/
