@@ -2,7 +2,7 @@
 Build, package and release the "Global Traffic Management (GTM) Datasource" plugin.
 
 ## Clone or fork the repository
-See [Git Handbook](https://guides.github.com/introduction/git-handbook/) for instructions.  
+See [Git Handbook](https://docs.github.com/en/get-started/using-git/about-git) for instructions.  
 If you clone, all changes should be made on the 'develop' branch.
 
 ## Update the version number
@@ -10,18 +10,19 @@ Edit package.json
 
 Advance the version number.  For example:
 ```
-  "version": "2.0.0",
+  "version": "2.1.0",
 ```
 
 ## Build
 See these references:  
-* [Build a plugin](https://grafana.com/docs/grafana/latest/developers/plugins/)
-* [Build a data source plugin](https://grafana.com/tutorials/build-a-data-source-plugin/)
+* [Build a plugin](https://grafana.com/developers/plugin-tools)
+* [Build a data source plugin](https://grafana.com/developers/plugin-tools/tutorials/build-a-data-source-plugin)
 
 ### First time build
-Run this command:
+This project uses Yarn 4 (managed by corepack). Enable corepack once, then install:
 ```
-yarn install --pure-lockfile
+corepack enable
+yarn install
 ```
 
 ### Build the back end
@@ -54,73 +55,53 @@ yarn build
 My output (after having previously built), looks like this:
 ```
 $ yarn build
-yarn run v1.22.10
-$ grafana-toolkit plugin:build
-✔ Preparing
-✔ Linting
-No tests found, exiting with code 0
-✔ Running tests
-⠙ Compiling...  Starting type checking service...
-  Using 1 worker with 2048MB memory limit
-⠙ Compiling...  
-   Hash: ff7600d671e6bd368aad
-  Version: webpack 4.41.5
-  Time: 5879ms
-  Built at: 03/25/2021 3:54:15 PM
-                  Asset       Size  Chunks                   Chunk Names
-           CHANGELOG.md    0 bytes          [emitted]        
-                LICENSE   11.1 KiB          [emitted]        
-              README.md   5.02 KiB          [emitted]        
-    img/akamai-logo.png   1.72 KiB          [emitted]        
-           img/logo.svg   1.55 KiB          [emitted]        
-              module.js     12 KiB       0  [emitted]        module
-  module.js.LICENSE.txt  808 bytes          [emitted]        
-          module.js.map   75.4 KiB       0  [emitted] [dev]  module
-            plugin.json   1.02 KiB          [emitted]        
-  Entrypoint module = module.js module.js.map
-   [0] external "react" 42 bytes {0} [built]
-   [1] ../node_modules/lodash/isObject.js 733 bytes {0} [built]
-   [2] external "@grafana/ui" 42 bytes {0} [built]
-   [6] ../node_modules/lodash/identity.js 370 bytes {0} [built]
-  [10] ../node_modules/lodash/eq.js 799 bytes {0} [built]
-  [11] ../node_modules/lodash/isArrayLike.js 830 bytes {0} [built]
-  [13] ../node_modules/lodash/_isIndex.js 759 bytes {0} [built]
-  [15] external "@grafana/data" 42 bytes {0} [built]
-  [16] external "@grafana/runtime" 42 bytes {0} [built]
-  [17] ../node_modules/lodash/defaults.js 1.71 KiB {0} [built]
-  [18] ../node_modules/lodash/_baseRest.js 559 bytes {0} [built]
-  [19] ../node_modules/lodash/_overRest.js 1.07 KiB {0} [built]
-  [35] ../node_modules/lodash/_isIterateeCall.js 877 bytes {0} [built]
-  [36] ../node_modules/lodash/keysIn.js 778 bytes {0} [built]
-  [51] ./module.ts + 5 modules 19.3 KiB {0} [built]
-       | ./module.ts 905 bytes [built]
-       | ./DataSource.ts 961 bytes [built]
-       | ./ConfigEditor.tsx 4.07 KiB [built]
-       | ./QueryEditor.tsx 2.68 KiB [built]
-       | ../node_modules/tslib/tslib.es6.js 10 KiB [built]
-       | ./types.ts 638 bytes [built]
-      + 37 hidden modules 
-  
-✔ Compiling...
-✨  Done in 15.14s.
+(node:83130) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///.../.config/webpack/webpack.config.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /.../package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+assets by path *.md 8.84 KiB
+  asset README.md 8.45 KiB [emitted] [from: ../README.md] [copied]
+  asset CHANGELOG.md 404 bytes [emitted] [from: ../CHANGELOG.md] [copied]
+asset module.js 12.5 KiB [emitted] [minimized] (name: module) 1 related asset
+asset LICENSE 11.1 KiB [emitted] [from: ../LICENSE] [copied]
+asset img/akamai-logo.png 1.72 KiB [emitted] [from: img/akamai-logo.png] [copied]
+asset plugin.json 1.26 KiB [emitted] [from: plugin.json] [copied]
+runtime modules 1.74 KiB 8 modules
+orphan modules 11.4 KiB [orphan] 5 modules
+modules by path ../node_modules/lodash/*.js 32 KiB
+  ../node_modules/lodash/defaults.js 1.71 KiB [built] [code generated]
+  ../node_modules/lodash/_baseRest.js 559 bytes [built] [code generated]
+  ../node_modules/lodash/eq.js 799 bytes [built] [code generated]
+  ../node_modules/lodash/_isIterateeCall.js 877 bytes [built] [code generated]
+  + 41 modules
+modules by path external "@grafana/ 126 bytes
+  external "@grafana/data" 42 bytes [built] [code generated]
+  external "@grafana/runtime" 42 bytes [built] [code generated]
+  external "@grafana/ui" 42 bytes [built] [code generated]
+./module.ts + 5 modules 12.3 KiB [built] [code generated]
+external "module" 42 bytes [built] [code generated]
+external "react" 42 bytes [built] [code generated]
+webpack 5.108.4 compiled successfully in 480 ms
 ```
 
+The `MODULE_TYPELESS_PACKAGE_JSON` warning is expected and harmless — Node's ESM loader can't tell from `package.json` alone whether `.config/webpack/webpack.config.ts` is CommonJS or ESM, guesses correctly, and moves on. It does not affect the build result.
+
 ## Commit your changes 
-See [Git Handbook](https://guides.github.com/introduction/git-handbook/) for instructions.  
+See [Git Handbook](https://docs.github.com/en/get-started/using-git/about-git) for instructions.  
 Open a Pull Request.
 
 ## Package
 Copy the 'dist' directory to 'akamai-gtm-datasource' and then compress.
 ```
 cp -r dist akamai-gtm-datasource
-zip akamai-gtm-datasource-2.0.0.zip akamai-gtm-datasource/ -r
+zip akamai-gtm-datasource-2.1.0.zip akamai-gtm-datasource/ -r
 ```
-'2.0.0' is an example. Use your current plugin version number.
+'2.1.0' is an example. Use your current plugin version number.
 
 ## Release
 Navigate to https://github.com/akamai/gtm-grafana-datasource-plugin.
 Log in. (You'll need admin rights.)
 
-Follow the directions in [Managing releases in a repository](https://docs.github.com/en/github/administering-a-repository/managing-releases-in-a-repository).  
-Tags should start with 'v', followed by the build number.  For example, 'v2.0.0'.  
+Follow the directions in [Managing releases in a repository](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).  
+Tags should start with 'v', followed by the build number.  For example, 'v2.1.0'.  
 
