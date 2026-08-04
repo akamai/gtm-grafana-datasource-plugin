@@ -16,8 +16,8 @@
 
 import defaults from 'lodash/defaults';
 import React, { ChangeEvent, PureComponent } from 'react';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { InlineField, Input, Combobox, ComboboxOption } from '@grafana/ui';
+import { QueryEditorProps } from '@grafana/data';
+import { InlineField, Input } from '@grafana/ui';
 
 import { DataSource } from './Datasource';
 import { defaultQuery, MyDataSourceOptions, MyQuery } from './types';

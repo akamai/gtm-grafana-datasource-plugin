@@ -2,26 +2,22 @@
 
 Use the Akamai Global Traffic Management plugin to observe GTM  metrics.
 
-**IMPORTANT**:
-***Documentation Visibility Notice*** > Because this is an unsigned plugin, this README and its setup instructions may not be visible within the Grafana Plugins Catalog depending on your version of Grafana. Please always refer to this GitHub repository for the most up-to-date installation and configuration steps.
+## Install Grafana 13.1.0 or newer
 
-## Install Grafana 12.4.0 or newer
+[Install Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/installation/) details the process of installing Grafana on several operating systems.
 
-[Install Grafana](https://grafana.com/docs/grafana/latest/installation/) details the process of installing Grafana on several operating systems.
-
-(Be sure to get version 12.4.0 or newer.  Your package manager may install an older version.  It's best to go to
-[Install Grafana](https://grafana.com/docs/grafana/latest/installation/) and follow the directions there.)
+(Be sure to get version 13.1.0 or newer.  Your package manager may install an older version.  It's best to go to
+[Install Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/installation/) and follow the directions there.)
 
 ## Obtain Akamai API credentials
 
 "Akamai GTM Datasource" gets data from the
-[Load Balancing DNS Traffic All Properties API](https://developer.akamai.com/api/core_features/reporting/load-balancing-dns-traffic-all-properties.html).
+[Load Balancing DNS Traffic All Properties API](https://techdocs.akamai.com/reporting/v1/reference/available-reports).
 
 You need to create an "API Client" with authorization to use the
-[Load Balancing DNS Traffic All Properties API](https://developer.akamai.com/api/core_features/reporting/load-balancing-dns-traffic-all-properties.html).
+[Load Balancing DNS Traffic All Properties API](https://techdocs.akamai.com/reporting/v1/reference/available-reports).
 
-See the "Get Started" section of [Reporting API v1](https://developer.akamai.com/api/core_features/reporting/v1.html)
-which says, "To enable this API, choose the API service named reporting-api, and set the access level to READ-WRITE".
+See the "Get Started" section of the [Reporting API v1](https://techdocs.akamai.com/reporting/v1/reference/api) which says, "To enable this API, choose the API service named reporting-api, and set the access level to READ-WRITE".
 
 Follow directions at [Authenticate With EdgeGrid](https://techdocs.akamai.com/developer/docs/edgegrid) to generate
 the required client credentials.
@@ -54,9 +50,9 @@ the requests.
 ## Installing this plugin on a local Grafana
 
 * On the [gtm-grafana-datasource-plugin](https://github.com/akamai/gtm-grafana-datasource-plugin) GitHub repository, 
-under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v2.0.1".
+under "Releases", select "Grafana datasource for Akamai Global Traffic Management (GTM)  metrics v2.1.0".
 
-* Copy "akamai-gtm-datasource-2.0.1.zip" to your computer.  Unzip the archive.
+* Copy "akamai-gtm-datasource-2.1.0.zip" to your computer.  Unzip the archive.
 
 ### Linux OSs (Debian, Ubuntu, CentOS, Fedora, OpenSuse, Red Hat)
 
@@ -156,10 +152,10 @@ to install_dir\data\plugins\gtm-grafana-datasource
 
 ### Grafana configuration
 
-[Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/) describes configuration for each 
+[Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/) describes configuration for each 
 operating system.  Carefully read the directions.
 
-* Using a text editor, open the configuration file (as described in [Configuration](https://grafana.com/docs/grafana/latest/administration/configuration/)).
+* Using a text editor, open the configuration file (as described in [Configure Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/)).
 
 * Under the [paths] section header, uncomment "plugins" by removing the semicolon.  For example:
 ```
@@ -180,9 +176,9 @@ plugins = /var/lib/grafana/plugins
 allow_loading_unsigned_plugins = akamai-gtm-datasource
 ```
 
-### Restart Grafana
-[Restart Grafana](https://grafana.com/docs/grafana/latest/installation/restart-grafana/)
-describes how to restart Grafana for each operating system.
+### Start-Restart Grafana
+[Start-Restart Grafana](https://grafana.com/docs/grafana/latest/setup-grafana/start-restart-grafana/)
+describes how to start and restart Grafana for each operating system.
 
 Under the log directory for your operating system, in "grafana.log", you should see something similar to:
 ```

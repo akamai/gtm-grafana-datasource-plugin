@@ -134,7 +134,7 @@ func errorFrame(msg string) *backend.DataResponse {
 	}
 }
 
-func (td *AkamaiEdgeDnsDatasource) query(ctx context.Context, query backend.DataQuery, dss dataSourceSettingsJson) (*backend.DataResponse, error) {
+func (td *AkamaiEdgeDnsDatasource) query(_ context.Context, query backend.DataQuery, dss dataSourceSettingsJson) (*backend.DataResponse, error) {
 	log.DefaultLogger.Info("QueryData", "RefID", query.RefID)
 
 	// Unmarshal the query JSON into your struct
